@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayam Bawang Putih by Rangga - POS System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-amber-800 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid font-bold fa-drumstick-bite text-2xl text-amber-300"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">Ayam Bawang Putih by Rangga</h1>
+                    <p class="text-xs text-amber-200">Sistem POS Ritel & Manajemen Stok</p>
+                </div>
+            </div>
+            <!-- Navigation Tabs -->
+            <nav class="flex space-x-2">
+                <button onclick="switchTab('kasir')" id="nav-kasir" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-amber-900 text-amber-200">
+                    <i class="fa-solid fa-cash-register mr-2"></i>Kasir
+                </button>
+                <button onclick="switchTab('antrian')" id="nav-antrian" class="px-4 py-2 rounded-lg text-sm font-semibold transition hover:bg-amber-700">
+                    <i class="fa-solid fa-users-line mr-2"></i>Antrian (<span id="queue-count">0</span>)
+                </button>
+                <button onclick="switchTab('stok')" id="nav-stok" class="px-4 py-2 rounded-lg text-sm font-semibold transition hover:bg-amber-700">
+                    <i class="fa-solid fa-boxes-stacked mr-2"></i>Stok & Bahan
+                </button>
+                <button onclick="switchTab('laporan')" id="nav-laporan" class="px-4 py-2 rounded-lg text-sm font-semibold transition hover:bg-amber-700">
+                    <i class="fa-solid fa-chart-line mr-2"></i>Laporan
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Global Stock Warning Banner -->
+    <div id="stock-warning-banner" class="bg-amber-100 border-b border-amber-300 text-amber-900 px-4 py-2 hidden">
+        <div class="max-w-7xl mx-auto flex items-center justify-between text-sm">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg"></i>
+                <span id="stock-warning-text" class="font-medium">Peringatan: Beberapa stok bahan/menu menipis!</span>
+            </div>
+            <button onclick="switchTab('stok')" class="underline font-semibold hover:text-amber-700">Cek Stok Sekarang</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto p-4 min-h-[calc(100vh-80px)]">
+
+        <!-- ================= PAGE 1: KASIR ================= -->
+        <section id="page-kasir" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Catalog (2 Cols) -->
+            <div class="lg:col-span-2 space-y-4">
+                <!-- Search & Category Filters -->
+                <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="search-input" oninput="renderCatalog()" placeholder="Cari menu makanan/minuman..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600">
+                    </div>
+                    <!-- Categories Horizontal Scroll -->
+                    <div class="flex space-x-2 overflow-x-auto pb-1 text-sm scrollbar-none" id="category-buttons">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Right: Cart & Billing (1 Col) -->
+            <div class="bg-white rounded-xl shadow-sm p-4 flex flex-col h-[750px] sticky top-20">
+                <div class="border-b pb-3 flex justify-between items-center">
+                    <h2 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-cart-shopping text-amber-700 mr-2"></i>Pesanan Baru</h2>
+                    <span id="cart-item-count" class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">0 Item</span>
+                </div>
+
+                <!-- Cart List -->
+                <div id="cart-list" class="flex-1 overflow-y-auto my-3 divide-y divide-gray-100">
+                    <!-- Items inserted here -->
+                </div>
+
+                <!-- Calculations -->
+                <div class="border-t pt-3 space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Subtotal</span>
+                        <span id="subtotal-val">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                        <span>Pajak (PB1 10%)</span>
+                        <span id="tax-val">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Diskon</span>
+                        <select id="discount-select" onchange="calculateCart()" class="border rounded px-2 py-1 text-xs">
+                            <option value="0">Tidak Ada</option>
+                            <option value="5">Diskon 5%</option>
+                            <option value="10">Diskon 10%</option>
+                            <option value="15">Diskon 15%</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between font-bold text-lg text-amber-900 border-t pt-2">
+                        <span>Total Bayar</span>
+                        <span id="total-val">Rp 0</span>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="pt-2">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Metode Pembayaran</label>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <button type="button" onclick="setPaymentMethod('Tunai')" id="pay-Tunai" class="pay-btn border py-2 rounded-lg font-medium text-center bg-amber-800 text-white border-amber-800">Tunai</button>
+                            <button type="button" onclick="setPaymentMethod('QRIS')" id="pay-QRIS" class="pay-btn border py-2 rounded-lg font-medium text-center hover:bg-gray-50">QRIS</button>
+                            <button type="button" onclick="setPaymentMethod('Debit/Kartu')" id="pay-Debit" class="pay-btn border py-2 rounded-lg font-medium text-center hover:bg-gray-50">Debit</button>
+                        </div>
+                    </div>
+
+                    <!-- Customer Name -->
+                    <div>
+                        <input type="text" id="customer-name" placeholder="Nama Pelanggan (Opsional)" class="w-full border px-3 py-1.5 rounded-lg text-xs">
+                    </div>
+
+                    <button onclick="processOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center space-x-2">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Proses Pesanan</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: ANTRIAN ================= -->
+        <section id="page-antrian" class="hidden space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold">Layar Antrian Dapur & Pelanggan</h2>
+                    <p class="text-xs text-gray-500">Kelola status pesanan dari proses hingga siap disajikan.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Section: Diproses -->
+                <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                    <h3 class="font-bold text-amber-900 mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-spinner fa-spin mr-2"></i>Sedang Diproses</span>
+                        <span id="processing-count" class="bg-amber-200 text-amber-900 text-xs px-2 py-0.5 rounded-full">0</span>
+                    </h3>
+                    <div id="processing-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Section: Siap Diambil -->
+                <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+                    <h3 class="font-bold text-emerald-900 mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-bell mr-2"></i>Siap Diambil / Selesai</span>
+                        <span id="ready-count" class="bg-emerald-200 text-emerald-900 text-xs px-2 py-0.5 rounded-full">0</span>
+                    </h3>
+                    <div id="ready-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: STOK & BAHAN ================= -->
+        <section id="page-stok" class="hidden space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold">Manajemen Stok & Bahan Baku</h2>
+                    <p class="text-xs text-gray-500">Pantau ketersediaan bahan dapur dan menu jadi.</p>
+                </div>
+                <!-- Toggle Tab Bahan vs Menu -->
+                <div class="flex space-x-2 bg-gray-100 p-1 rounded-lg text-sm">
+                    <button onclick="toggleStokView('menu')" id="stok-tab-menu" class="px-4 py-1.5 rounded-md font-semibold bg-white shadow-sm text-amber-800">Stok Menu Jadi</button>
+                    <button onclick="toggleStokView('bahan')" id="stok-tab-bahan" class="px-4 py-1.5 rounded-md font-semibold text-gray-600">Stok Bahan Baku</button>
+                </div>
+            </div>
+
+            <!-- Table Menu Stok -->
+            <div id="stok-menu-container" class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="p-3 font-semibold text-gray-600">Nama Menu</th>
+                            <th class="p-3 font-semibold text-gray-600">Kategori</th>
+                            <th class="p-3 font-semibold text-gray-600">Harga</th>
+                            <th class="p-3 font-semibold text-gray-600">Sisa Stok</th>
+                            <th class="p-3 font-semibold text-gray-600">Status</th>
+                            <th class="p-3 font-semibold text-gray-600">Aksi Restock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stok-menu-tbody" class="divide-y divide-gray-100">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Bahan Baku Stok -->
+            <div id="stok-bahan-container" class="bg-white rounded-xl shadow-sm overflow-hidden hidden">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="p-3 font-semibold text-gray-600">Nama Bahan Baku</th>
+                            <th class="p-3 font-semibold text-gray-600">Jumlah Stok</th>
+                            <th class="p-3 font-semibold text-gray-600">Satuan</th>
+                            <th class="p-3 font-semibold text-gray-600">Batas Minimum</th>
+                            <th class="p-3 font-semibold text-gray-600">Status</th>
+                            <th class="p-3 font-semibold text-gray-600">Tambah Stok</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stok-bahan-tbody" class="divide-y divide-gray-100">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 4: LAPORAN ================= -->
+        <section id="page-laporan" class="hidden space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold">Laporan & Analytic Penjualan</h2>
+                    <p class="text-xs text-gray-500">Evaluasi omset dan tren menu terlaris.</p>
+                </div>
+                <!-- Filter Periode -->
+                <div class="flex space-x-2">
+                    <button onclick="setLaporanPeriod('harian')" id="period-harian" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-800 text-white">Hari Ini</button>
+                    <button onclick="setLaporanPeriod('mingguan')" id="period-mingguan" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">Minggu Ini</button>
+                    <button onclick="setLaporanPeriod('bulanan')" id="period-bulanan" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">Bulan Ini</button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-600">
+                    <p class="text-xs text-gray-500">Total Pendapatan</p>
+                    <h3 id="report-total-omset" class="text-2xl font-bold text-gray-800">Rp 0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-600">
+                    <p class="text-xs text-gray-500">Total Transaksi</p>
+                    <h3 id="report-total-tx" class="text-2xl font-bold text-gray-800">0 Transaksi</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
+                    <p class="text-xs text-gray-500">Rata-rata Per Transaksi</p>
+                    <h3 id="report-avg-tx" class="text-2xl font-bold text-gray-800">Rp 0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Chart Area -->
+                <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-gray-800 mb-4">Grafik Tren Penjualan</h3>
+                    <div class="h-64">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Selling Items -->
+                <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+                    <h3 class="font-bold text-gray-800 border-b pb-2"><i class="fa-solid fa-fire text-amber-600 mr-2"></i>Menu Terlaris (Top Selling)</h3>
+                    <div id="top-selling-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- INVOICE MODAL -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <div class="text-center border-b pb-3">
+                <h3 class="font-bold text-lg text-amber-900">Ayam Bawang Putih by Rangga</h3>
+                <p class="text-xs text-gray-500">Jl. Kuliner No. 8, Banten</p>
+                <p class="text-xs text-gray-400 mt-1" id="inv-date"></p>
+            </div>
+
+            <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span>No. Antrian:</span><span id="inv-queue" class="font-bold text-amber-800"></span></div>
+                <div class="flex justify-between"><span>Pelanggan:</span><span id="inv-customer"></span></div>
+                <div class="flex justify-between"><span>Metode Bayar:</span><span id="inv-method"></span></div>
+            </div>
+
+            <div class="border-t border-b py-2 space-y-1 text-xs divide-y divide-gray-100" id="inv-items">
+                <!-- Items list -->
+            </div>
+
+            <div class="text-xs space-y-1 pt-1">
+                <div class="flex justify-between"><span>Subtotal:</span><span id="inv-subtotal"></span></div>
+                <div class="flex justify-between"><span>Pajak (10%):</span><span id="inv-tax"></span></div>
+                <div class="flex justify-between"><span>Diskon:</span><span id="inv-discount"></span></div>
+                <div class="flex justify-between font-bold text-sm text-amber-900 pt-1 border-t"><span>Total:</span><span id="inv-total"></span></div>
+            </div>
+
+            <div class="pt-2 space-y-2">
+                <button onclick="window.print()" class="w-full bg-amber-800 text-white font-bold py-2 rounded-lg text-xs hover:bg-amber-900"><i class="fa-solid fa-print mr-2"></i>Cetak Struk</button>
+                <button onclick="closeInvoiceModal()" class="w-full bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-xs hover:bg-gray-300">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Data State
+        let categories = ['Semua', 'Hidangan Utama', 'Hidangan Pembuka', 'Penutup', 'Pencuci Mulut', 'Side Dish', 'Minuman Dingin', 'Minuman Panas', 'Menu Paket / Combo', 'Menu Nasi Pilihan', 'Menu Anak'];
+        let selectedCategory = 'Semua';
+
+        let products = [
+            { id: 1, name: 'Ayam Bawang Putih Original', category: 'Hidangan Utama', price: 25000, stock: 15, sold: 42, icon: 'fa-drumstick-bite' },
+            { id: 2, name: 'Ayam Bawang Putih Crispy Boneless', category: 'Hidangan Utama', price: 28000, stock: 4, sold: 38, icon: 'fa-drumstick-bite' },
+            { id: 3, name: 'Paket Personal Bawang', category: 'Menu Paket / Combo', price: 32000, stock: 20, sold: 55, icon: 'fa-box-open' },
+            { id: 4, name: 'Paket Ramai Ber-4', category: 'Menu Paket / Combo', price: 110000, stock: 8, sold: 12, icon: 'fa-users' },
+            { id: 5, name: 'Nasi Uduk Bawang Gurih', category: 'Menu Nasi Pilihan', price: 7000, stock: 30, sold: 60, icon: 'fa-bowl-rice' },
+            { id: 6, name: 'Nasi Putih Pulen', category: 'Menu Nasi Pilihan', price: 5000, stock: 50, sold: 80, icon: 'fa-bowl-rice' },
+            { id: 7, name: 'Garlic Bites Kids Meal', category: 'Menu Anak', price: 20000, stock: 10, sold: 18, icon: 'fa-child' },
+            { id: 8, name: 'Tahu / Tempe Bawang Crispy', category: 'Side Dish', price: 10000, stock: 25, sold: 30, icon: 'fa-cubes' },
+            { id: 9, name: 'Kulit Ayam Goreng Bawang', category: 'Hidangan Pembuka', price: 15000, stock: 3, sold: 45, icon: 'fa-bowl-food' },
+            { id: 10, name: 'Es Teh Manis Solo', category: 'Minuman Dingin', price: 5000, stock: 100, sold: 120, icon: 'fa-glass-water' },
+            { id: 11, name: 'Es Jeruk Peras', category: 'Minuman Dingin', price: 8000, stock: 40, sold: 35, icon: 'fa-glass-water' },
+            { id: 12, name: 'Teh Tubruk Bawang Warm', category: 'Minuman Panas', price: 6000, stock: 30, sold: 15, icon: 'fa-mug-hot' },
+            { id: 13, name: 'Pudding Mango Cream', category: 'Pencuci Mulut', price: 12000, stock: 12, sold: 20, icon: 'fa-ice-cream' },
+            { id: 14, name: 'Banana Crispy Garlic Sugar', category: 'Penutup', price: 15000, stock: 8, sold: 14, icon: 'fa-cookie' }
+        ];
+
+        let ingredients = [
+            { id: 1, name: 'Ayam Utuh Segar', qty: 12, unit: 'Ekor', min: 15 },
+            { id: 2, name: 'Bawang Putih Kating', qty: 4.5, unit: 'Kg', min: 5 },
+            { id: 3, name: 'Beras Premium', qty: 25, unit: 'Kg', min: 10 },
+            { id: 4, name: 'Minyak Goreng', qty: 18, unit: 'Liter', min: 10 },
+            { id: 5, name: 'Tepung Bumbu Marinasi', qty: 8, unit: 'Kg', min: 5 },
+            { id: 6, name: 'Daun Teh Solo', qty: 2, unit: 'Kg', min: 1 }
+        ];
+
+        let cart = [];
+        let selectedPayment = 'Tunai';
+        let queueList = [];
+        let completedTransactions = [
+            { id: 'TX001', date: new Date(), total: 42000, itemsCount: 2, period: 'harian' },
+            { id: 'TX002', date: new Date(), total: 115000, itemsCount: 4, period: 'harian' }
+        ];
+        let queueCounter = 1;
+        let salesChart = null;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+            renderCatalog();
+            checkStockWarnings();
+            initChart();
+        });
+
+        // Tab Switching
+        function switchTab(tab) {
+            ['kasir', 'antrian', 'stok', 'laporan'].forEach(t => {
+                document.getElementById(`page-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "px-4 py-2 rounded-lg text-sm font-semibold transition hover:bg-amber-700";
+            });
+            document.getElementById(`page-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-amber-900 text-amber-200";
+
+            if (tab === 'stok') renderStokTables();
+            if (tab === 'laporan') updateReportView('harian');
+        }
+
+        // Render Categories
+        function renderCategories() {
+            const container = document.getElementById('category-buttons');
+            container.innerHTML = categories.map(cat => `
+                <button onclick="filterCategory('${cat}')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${selectedCategory === cat ? 'bg-amber-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function filterCategory(cat) {
+            selectedCategory = cat;
+            renderCategories();
+            renderCatalog();
+        }
+
+        // Render Catalog Grid
+        function renderCatalog() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const grid = document.getElementById('product-grid');
+            
+            const filtered = products.filter(p => {
+                const matchCat = selectedCategory === 'Semua' || p.category === selectedCategory;
+                const matchSearch = p.name.toLowerCase().includes(search);
+                return matchCat && matchSearch;
+            });
+
+            grid.innerHTML = filtered.map(p => `
+                <div class="bg-white border rounded-xl p-3 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="p-2 bg-amber-100 text-amber-800 rounded-lg"><i class="fa-solid ${p.icon}"></i></span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded ${p.stock === 0 ? 'bg-red-100 text-red-700' : p.stock <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+                                ${p.stock === 0 ? 'Habis' : 'Stok: ' + p.stock}
+                            </span>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-800 line-clamp-2">${p.name}</h4>
+                        <p class="text-xs text-gray-500">${p.category}</p>
+                    </div>
+                    <div class="mt-3 flex justify-between items-center pt-2 border-t">
+                        <span class="font-bold text-sm text-amber-900">Rp ${p.price.toLocaleString('id-ID')}</span>
+                        <button onclick="addToCart(${p.id})" ${p.stock === 0 ? 'disabled' : ''} class="px-3 py-1 bg-amber-800 hover:bg-amber-900 disabled:bg-gray-300 text-white text-xs font-bold rounded-lg transition">
+                            + Tambah
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cart Actions
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) return;
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.qty < product.stock) {
+                    existing.qty++;
+                } else {
+                    alert('Jumlah melebihi stok yang tersedia!');
+                }
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function updateCartQty(productId, delta) {
+            const item = cart.find(i => i.id === productId);
+            const product = products.find(p => p.id === productId);
+            if (!item) return;
+
+            item.qty += delta;
+            if (item.qty > product.stock) {
+                item.qty = product.stock;
+                alert('Mencapai batas stok maksimum!');
+            }
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== productId);
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            document.getElementById('cart-item-count').innerText = `${cart.reduce((a,b) => a + b.qty, 0)} Item`;
+
+            if (cart.length === 0) {
+                list.innerHTML = `<div class="text-center text-gray-400 py-10 text-xs">Keranjang masih kosong</div>`;
+            } else {
+                list.innerHTML = cart.map(item => `
+                    <div class="py-2 flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-xs text-gray-800">${item.name}</p>
+                            <p class="text-xs text-gray-500">Rp ${item.price.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateCartQty(${item.id}, -1)" class="w-5 h-5 bg-gray-200 rounded text-xs font-bold">-</button>
+                            <span class="text-xs font-bold">${item.qty}</span>
+                            <button onclick="updateCartQty(${item.id}, 1)" class="w-5 h-5 bg-gray-200 rounded text-xs font-bold">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            calculateCart();
+        }
+
+        function calculateCart() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const tax = subtotal * 0.10;
+            const discountPct = parseInt(document.getElementById('discount-select').value) || 0;
+            const discount = subtotal * (discountPct / 100);
+            const total = subtotal + tax - discount;
+
+            document.getElementById('subtotal-val').innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
+            document.getElementById('tax-val').innerText = `Rp ${tax.toLocaleString('id-ID')}`;
+            document.getElementById('total-val').innerText = `Rp ${Math.max(0, total).toLocaleString('id-ID')}`;
+        }
+
+        function setPaymentMethod(method) {
+            selectedPayment = method;
+            document.querySelectorAll('.pay-btn').forEach(b => {
+                b.className = "pay-btn border py-2 rounded-lg font-medium text-center hover:bg-gray-50 text-xs";
+            });
+            document.getElementById(`pay-${method.split('/')[0]}`).className = "pay-btn border py-2 rounded-lg font-medium text-center bg-amber-800 text-white border-amber-800 text-xs";
+        }
+
+        // Process Order
+        function processOrder() {
+            if (cart.length === 0) return alert('Keranjang belanja kosong!');
+
+            const customer = document.getElementById('customer-name').value || 'Pelanggan Umum';
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const tax = subtotal * 0.10;
+            const discountPct = parseInt(document.getElementById('discount-select').value) || 0;
+            const discount = subtotal * (discountPct / 100);
+            const total = subtotal + tax - discount;
+            const queueNo = `A-${String(queueCounter++).padStart(3, '0')}`;
+
+            // Deduct Stock & Update Sold
+            cart.forEach(item => {
+                const prod = products.find(p => p.id === item.id);
+                if (prod) {
+                    prod.stock -= item.qty;
+                    prod.sold += item.qty;
+                }
+            });
+
+            // Push to Queue
+            queueList.push({
+                queueNo, customer, items: [...cart], total, status: 'Diproses'
+            });
+
+            // Push to Completed Tx
+            completedTransactions.push({
+                id: `TX${String(completedTransactions.length + 1).padStart(3, '0')}`,
+                date: new Date(),
+                total,
+                itemsCount: cart.reduce((a,b) => a + b.qty, 0),
+                period: 'harian'
+            });
+
+            // Show Invoice Modal
+            showInvoiceModal(queueNo, customer, [...cart], subtotal, tax, discount, total);
+
+            // Reset Cart & Refresh UI
+            cart = [];
+            document.getElementById('customer-name').value = '';
+            renderCart();
+            renderCatalog();
+            renderQueue();
+            checkStockWarnings();
+        }
+
+        // Invoice Modal
+        function showInvoiceModal(queue, customer, items, sub, tax, disc, total) {
+            document.getElementById('inv-date').innerText = new Date().toLocaleString('id-ID');
+            document.getElementById('inv-queue').innerText = queue;
+            document.getElementById('inv-customer').innerText = customer;
+            document.getElementById('inv-method').innerText = selectedPayment;
+            document.getElementById('inv-subtotal').innerText = `Rp ${sub.toLocaleString('id-ID')}`;
+            document.getElementById('inv-tax').innerText = `Rp ${tax.toLocaleString('id-ID')}`;
+            document.getElementById('inv-discount').innerText = `- Rp ${disc.toLocaleString('id-ID')}`;
+            document.getElementById('inv-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+
+            document.getElementById('inv-items').innerHTML = items.map(i => `
+                <div class="flex justify-between py-1">
+                    <span>${i.name} x${i.qty}</span>
+                    <span>Rp ${(i.price * i.qty).toLocaleString('id-ID')}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('invoice-modal').classList.remove('hidden');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-modal').classList.add('hidden');
+        }
+
+        // Queue Display
+        function renderQueue() {
+            document.getElementById('queue-count').innerText = queueList.filter(q => q.status === 'Diproses').length;
+            
+            const processing = queueList.filter(q => q.status === 'Diproses');
+            const ready = queueList.filter(q => q.status === 'Siap Diambil');
+
+            document.getElementById('processing-count').innerText = processing.length;
+            document.getElementById('ready-count').innerText = ready.length;
+
+            document.getElementById('processing-list').innerHTML = processing.length === 0 ? `<p class="text-xs text-gray-400">Tidak ada pesanan diproses.</p>` :
+                processing.map(q => `
+                    <div class="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-amber-800">${q.queueNo}</span>
+                            <p class="font-bold text-sm text-gray-800">${q.customer}</p>
+                            <p class="text-xs text-gray-500">${q.items.length} Menu - Rp ${q.total.toLocaleString('id-ID')}</p>
+                        </div>
+                        <button onclick="updateQueueStatus('${q.queueNo}', 'Siap Diambil')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg">Tandai Siap</button>
+                    </div>
+                `).join('');
+
+            document.getElementById('ready-list').innerHTML = ready.length === 0 ? `<p class="text-xs text-gray-400">Tidak ada pesanan siap diambil.</p>` :
+                ready.map(q => `
+                    <div class="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-emerald-800">${q.queueNo}</span>
+                            <p class="font-bold text-sm text-gray-800">${q.customer}</p>
+                            <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Selesai</span>
+                        </div>
+                        <button onclick="clearQueueItem('${q.queueNo}')" class="text-xs text-gray-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+        }
+
+        function updateQueueStatus(queueNo, newStatus) {
+            const q = queueList.find(item => item.queueNo === queueNo);
+            if (q) {
+                q.status = newStatus;
+                renderQueue();
+            }
+        }
+
+        function clearQueueItem(queueNo) {
+            queueList = queueList.filter(q => q.queueNo !== queueNo);
+            renderQueue();
+        }
+
+        // Stok & Restock
+        function toggleStokView(view) {
+            if (view === 'menu') {
+                document.getElementById('stok-menu-container').classList.remove('hidden');
+                document.getElementById('stok-bahan-container').classList.add('hidden');
+                document.getElementById('stok-tab-menu').className = "px-4 py-1.5 rounded-md font-semibold bg-white shadow-sm text-amber-800";
+                document.getElementById('stok-tab-bahan').className = "px-4 py-1.5 rounded-md font-semibold text-gray-600";
+            } else {
+                document.getElementById('stok-menu-container').classList.add('hidden');
+                document.getElementById('stok-bahan-container').classList.remove('hidden');
+                document.getElementById('stok-tab-menu').className = "px-4 py-1.5 rounded-md font-semibold text-gray-600";
+                document.getElementById('stok-tab-bahan').className = "px-4 py-1.5 rounded-md font-semibold bg-white shadow-sm text-amber-800";
+            }
+            renderStokTables();
+        }
+
+        function renderStokTables() {
+            // Menu Stok
+            document.getElementById('stok-menu-tbody').innerHTML = products.map(p => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 font-semibold text-gray-800">${p.name}</td>
+                    <td class="p-3 text-gray-500">${p.category}</td>
+                    <td class="p-3 text-gray-800">Rp ${p.price.toLocaleString('id-ID')}</td>
+                    <td class="p-3 font-bold">${p.stock}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${p.stock === 0 ? 'bg-red-100 text-red-700' : p.stock <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+                            ${p.stock === 0 ? 'Habis' : p.stock <= 5 ? 'Menipis' : 'Aman'}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <button onclick="restockMenu(${p.id}, 10)" class="px-2 py-1 bg-amber-800 hover:bg-amber-900 text-white rounded text-xs font-bold">+10 Stok</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Bahan Baku Stok
+            document.getElementById('stok-bahan-tbody').innerHTML = ingredients.map(i => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 font-semibold text-gray-800">${i.name}</td>
+                    <td class="p-3 font-bold">${i.qty}</td>
+                    <td class="p-3 text-gray-500">${i.unit}</td>
+                    <td class="p-3 text-gray-500">${i.min} ${i.unit}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${i.qty <= i.min ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'}">
+                            ${i.qty <= i.min ? 'Batas Minimum' : 'Aman'}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <button onclick="restockIngredient(${i.id}, 5)" class="px-2 py-1 bg-amber-800 hover:bg-amber-900 text-white rounded text-xs font-bold">+5 ${i.unit}</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function restockMenu(id, amount) {
+            const p = products.find(item => item.id === id);
+            if (p) {
+                p.stock += amount;
+                renderStokTables();
+                renderCatalog();
+                checkStockWarnings();
+            }
+        }
+
+        function restockIngredient(id, amount) {
+            const i = ingredients.find(item => item.id === id);
+            if (i) {
+                i.qty += amount;
+                renderStokTables();
+                checkStockWarnings();
+            }
+        }
+
+        function checkStockWarnings() {
+            const lowMenu = products.filter(p => p.stock <= 5);
+            const lowIng = ingredients.filter(i => i.qty <= i.min);
+
+            const banner = document.getElementById('stock-warning-banner');
+            const text = document.getElementById('stock-warning-text');
+
+            if (lowMenu.length > 0 || lowIng.length > 0) {
+                banner.classList.remove('hidden');
+                text.innerText = `Peringatan: Ada ${lowMenu.length} menu dan ${lowIng.length} bahan baku mendekati batas stok minimum!`;
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        // Laporan & Analytics
+        function setLaporanPeriod(period) {
+            ['harian', 'mingguan', 'bulanan'].forEach(p => {
+                document.getElementById(`period-${p}`).className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200";
+            });
+            document.getElementById(`period-${period}`).className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-800 text-white";
+            updateReportView(period);
+        }
+
+        function updateReportView(period) {
+            // Simulated Data per Period
+            let multiplier = period === 'harian' ? 1 : period === 'mingguan' ? 5.5 : 22;
+            const totalOmset = completedTransactions.reduce((a,b) => a + b.total, 0) * multiplier;
+            const totalTx = Math.round(completedTransactions.length * multiplier);
+            const avgTx = totalTx > 0 ? totalOmset / totalTx : 0;
+
+            document.getElementById('report-total-omset').innerText = `Rp ${totalOmset.toLocaleString('id-ID')}`;
+            document.getElementById('report-total-tx').innerText = `${totalTx} Transaksi`;
+            document.getElementById('report-avg-tx').innerText = `Rp ${Math.round(avgTx).toLocaleString('id-ID')}`;
+
+            // Render Top Selling
+            const topSelling = [...products].sort((a,b) => b.sold - a.sold).slice(0, 5);
+            document.getElementById('top-selling-list').innerHTML = topSelling.map((p, idx) => `
+                <div class="flex justify-between items-center border-b pb-2 text-xs">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-amber-800 w-4">#${idx + 1}</span>
+                        <div>
+                            <p class="font-bold text-gray-800">${p.name}</p>
+                            <p class="text-gray-400">${p.category}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-emerald-700">${p.sold} Terjual</span>
+                        <p class="text-gray-500">Rp ${(p.price * p.sold).toLocaleString('id-ID')}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update Chart
+            updateChart(period);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
+                    datasets: [{
+                        label: 'Pendapatan (Rp)',
+                        data: [120000, 250000, 850000, 400000, 600000, 1100000, 750000],
+                        borderColor: '#92400e',
+                        backgroundColor: 'rgba(146, 64, 14, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updateChart(period) {
+            if (!salesChart) return;
+            if (period === 'harian') {
+                salesChart.data.labels = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+                salesChart.data.datasets[0].data = [120000, 250000, 850000, 400000, 600000, 1100000, 750000];
+            } else if (period === 'mingguan') {
+                salesChart.data.labels = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+                salesChart.data.datasets[0].data = [2100000, 1800000, 2400000, 2900000, 3800000, 5200000, 4800000];
+            } else {
+                salesChart.data.labels = ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'];
+                salesChart.data.datasets[0].data = [14500000, 18200000, 16800000, 21000000];
+            }
+            salesChart.update();
+        }
+    </script>
+</body>
+</html>
