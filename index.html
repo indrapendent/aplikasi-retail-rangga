@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayam Bawang Putih by Rangga - POS System</title>
+    <title>Baput by Rangga - Ayam Bawang Putih POS System</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -17,8 +17,46 @@
     <div id="login-modal" class="fixed inset-0 bg-red-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-red-100">
             <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-3 text-red-600">
-                    <i class="fa-solid fa-drumstick-bite text-3xl"></i>
+                <!-- SVG LOGO BAPUT BY RANGGA (KFC STYLE) -->
+                <div class="inline-flex items-center justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" class="w-24 h-24 drop-shadow-md">
+                      <defs>
+                        <radialGradient id="redGradLogin" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stop-color="#EF4444" />
+                          <stop offset="100%" stop-color="#B91C1C" />
+                        </radialGradient>
+                        <linearGradient id="goldGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#FCD34D" />
+                          <stop offset="100%" stop-color="#F59E0B" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="200" cy="200" r="185" fill="none" stroke="#F59E0B" stroke-width="8" />
+                      <circle cx="200" cy="200" r="175" fill="url(#redGradLogin)" stroke="#FFFFFF" stroke-width="6" />
+                      <rect x="145" y="25" width="22" height="350" fill="#FFFFFF" opacity="0.15" />
+                      <rect x="233" y="25" width="22" height="350" fill="#FFFFFF" opacity="0.15" />
+                      <g transform="translate(0, -10)">
+                        <path d="M180,95 Q190,75 200,90 Q210,75 220,95 Z" fill="#DC2626" />
+                        <ellipse cx="200" cy="140" rx="45" ry="40" fill="#FFFFFF" />
+                        <polygon points="190,140 210,140 200,155" fill="#F59E0B" />
+                        <circle cx="185" cy="130" r="5" fill="#1E293B" />
+                        <circle cx="215" cy="130" r="5" fill="#1E293B" />
+                        <path d="M170,105 Q200,80 230,105 L225,120 L175,120 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
+                        <rect x="175" y="115" width="50" height="7" fill="#DC2626" rx="2" />
+                        <g transform="translate(230, 150) scale(0.75)">
+                          <path d="M20,30 C10,30 5,20 10,10 C15,0 25,0 30,10 C35,20 30,30 20,30 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2" />
+                          <path d="M20,30 C18,20 18,10 20,0" fill="none" stroke="#CBD5E1" stroke-width="1.5" />
+                        </g>
+                        <path d="M160,175 L240,175 L230,240 L170,240 Z" fill="#991B1B" />
+                        <polygon points="185,180 200,190 185,200" fill="#FFFFFF" />
+                        <polygon points="215,180 200,190 215,200" fill="#FFFFFF" />
+                        <circle cx="200" cy="190" r="4" fill="#F59E0B" />
+                      </g>
+                      <path d="M 40,280 L 360,280 L 340,335 L 60,335 Z" fill="url(#goldGradLogin)" stroke="#FFFFFF" stroke-width="3" />
+                      <path d="M 35,290 L 60,335 L 40,345 Z" fill="#D97706" />
+                      <path d="M 365,290 L 340,335 L 360,345 Z" fill="#D97706" />
+                      <text x="200" y="315" font-family="'Impact', 'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="1">BAPUT</text>
+                      <text x="200" y="330" font-family="'Arial', sans-serif" font-size="11" font-weight="bold" fill="#92400E" text-anchor="middle" letter-spacing="2">BY RANGGA</text>
+                    </svg>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800">Masuk ke System POS</h2>
                 <p class="text-xs text-red-700 font-medium">Ayam Bawang Putih by Rangga</p>
@@ -54,12 +92,50 @@
 
     <!-- Top Navigation Bar -->
     <header class="bg-red-700 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <i class="fa-solid font-bold fa-drumstick-bite text-2xl text-amber-300"></i>
+                <!-- HEADER LOGO SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" class="w-12 h-12 drop-shadow">
+                  <defs>
+                    <radialGradient id="redGradHeader" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#EF4444" />
+                      <stop offset="100%" stop-color="#B91C1C" />
+                    </radialGradient>
+                    <linearGradient id="goldGradHeader" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#FCD34D" />
+                      <stop offset="100%" stop-color="#F59E0B" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="200" cy="200" r="185" fill="none" stroke="#F59E0B" stroke-width="8" />
+                  <circle cx="200" cy="200" r="175" fill="url(#redGradHeader)" stroke="#FFFFFF" stroke-width="6" />
+                  <rect x="145" y="25" width="22" height="350" fill="#FFFFFF" opacity="0.15" />
+                  <rect x="233" y="25" width="22" height="350" fill="#FFFFFF" opacity="0.15" />
+                  <g transform="translate(0, -10)">
+                    <path d="M180,95 Q190,75 200,90 Q210,75 220,95 Z" fill="#DC2626" />
+                    <ellipse cx="200" cy="140" rx="45" ry="40" fill="#FFFFFF" />
+                    <polygon points="190,140 210,140 200,155" fill="#F59E0B" />
+                    <circle cx="185" cy="130" r="5" fill="#1E293B" />
+                    <circle cx="215" cy="130" r="5" fill="#1E293B" />
+                    <path d="M170,105 Q200,80 230,105 L225,120 L175,120 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
+                    <rect x="175" y="115" width="50" height="7" fill="#DC2626" rx="2" />
+                    <g transform="translate(230, 150) scale(0.75)">
+                      <path d="M20,30 C10,30 5,20 10,10 C15,0 25,0 30,10 C35,20 30,30 20,30 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2" />
+                      <path d="M20,30 C18,20 18,10 20,0" fill="none" stroke="#CBD5E1" stroke-width="1.5" />
+                    </g>
+                    <path d="M160,175 L240,175 L230,240 L170,240 Z" fill="#991B1B" />
+                    <polygon points="185,180 200,190 185,200" fill="#FFFFFF" />
+                    <polygon points="215,180 200,190 215,200" fill="#FFFFFF" />
+                    <circle cx="200" cy="190" r="4" fill="#F59E0B" />
+                  </g>
+                  <path d="M 40,280 L 360,280 L 340,335 L 60,335 Z" fill="url(#goldGradHeader)" stroke="#FFFFFF" stroke-width="3" />
+                  <path d="M 35,290 L 60,335 L 40,345 Z" fill="#D97706" />
+                  <path d="M 365,290 L 340,335 L 360,345 Z" fill="#D97706" />
+                  <text x="200" y="315" font-family="'Impact', 'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="1">BAPUT</text>
+                  <text x="200" y="330" font-family="'Arial', sans-serif" font-size="11" font-weight="bold" fill="#92400E" text-anchor="middle" letter-spacing="2">BY RANGGA</text>
+                </svg>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wide">Ayam Bawang Putih by Rangga</h1>
-                    <p class="text-xs text-amber-200">Sistem POS Ritel & Manajemen Stok</p>
+                    <h1 class="text-xl font-bold tracking-wide leading-tight">Baput by Rangga</h1>
+                    <p class="text-[11px] text-amber-200">Ayam Bawang Putih - System POS</p>
                 </div>
             </div>
             
@@ -332,7 +408,7 @@
     <div id="invoice-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
             <div class="text-center border-b pb-3">
-                <h3 class="font-bold text-lg text-red-700">Ayam Bawang Putih by Rangga</h3>
+                <h3 class="font-bold text-lg text-red-700">Baput by Rangga</h3>
                 <p class="text-xs text-gray-500">Jl. Kuliner No. 8, Banten</p>
                 <p class="text-xs text-gray-400 mt-1" id="inv-date"></p>
             </div>
