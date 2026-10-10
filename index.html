@@ -10,6 +10,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- PRINT STYLES FOR THERMAL RECEIPT -->
+    <style>
+        @media print {
+            /* Sembunyikan seluruh elemen halaman */
+            body * {
+                visibility: hidden;
+            }
+
+            /* Hanya tampilkan modal struk/invoice */
+            #invoice-modal, #invoice-modal * {
+                visibility: visible;
+            }
+
+            /* Format khusus kertas printer thermal 80mm */
+            #invoice-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background: white !important;
+                padding: 0 !important;
+            }
+
+            #invoice-modal > div {
+                box-shadow: none !important;
+                border: none !important;
+                width: 80mm !important;
+                margin: 0 auto;
+                padding: 10px !important;
+            }
+
+            /* Sembunyikan tombol cetak & tutup di hasil cetak */
+            #invoice-modal button {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
 
